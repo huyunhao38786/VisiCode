@@ -1,0 +1,55 @@
+{
+  "name": "Project1",
+  "version": "0.1.0",
+  "private": true,
+  "dependencies": {
+    "@emotion/react": "^11.10.4",
+    "@emotion/styled": "^11.10.4",
+    "@googlemaps/react-wrapper": "^1.1.35",
+    "@iconify/react": "^4.0.0",
+    "@mui/material": "^5.10.8",
+    "@mui/x-data-grid": "^5.17.6",
+    "@testing-library/jest-dom": "^4.2.4",
+    "@testing-library/react": "^9.3.2",
+    "@testing-library/user-event": "^7.1.2",
+    "axios": "^0.19.2",
+    "bootstrap": "^4.6.2",
+    "history": "^5.3.0",
+    "react": "^18.1.0",
+    "react-dom": "^18.1.0",
+    "react-redux": "^7.2.1",
+    "react-router-dom": "^6.0.0-alpha.2",
+    "react-scripts": "3.4.3",
+    "react-validation": "^3.0.7",
+    "redux": "^4.0.5",
+    "redux-thunk": "^2.3.0",
+    "validator": "^13.7.0"
+  },
+  "scripts": {
+    "start": "react-scripts start",
+    "build": "react-scripts build",
+    "test": "react-scripts test",
+    "eject": "react-scripts eject"
+  },
+  "eslintConfig": {
+    "extends": "react-app"
+  },
+  "browserslist": {
+    "production": [
+      ">0.2%",
+      "not dead",
+      "not op_mini all"
+    ],
+    "development": [
+      "last 1 chrome version",
+      "last 1 firefox version",
+      "last 1 safari version"
+    ]
+  },
+  "devDependencies": {
+    "@iconify/icons-mdi": "^1.2.31",
+    "google-map-react": "^2.2.0",
+    "react-error-overlay": "^6.0.9",
+    "redux-devtools-extension": "^2.13.8"
+  }
+}
