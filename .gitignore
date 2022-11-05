@@ -34,6 +34,7 @@ build/
 
 ### google account key ###
 visi-code-5528cbe2804d.json
+**/application.properties
 
 ### npm packages ###
 node_modules
