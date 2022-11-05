@@ -17,8 +17,9 @@
 
 # Testing the Project
 - open the project using IntelliJ, navigate to `src/test/java`
-  - open `MapControllerTests` and run from the button next to the class
-  - open `UserControllerTests` and run similarly
+  - open test files and run test cases contained in the classes / methods
+- to run E2E tests, navigate to `nightwatch_tests` and run `npx nightwatch`
+  - be sure to have the app already running locally when testing localhost (see later sections)
 
 # Running Part of the Project Locally
 ## Frontend

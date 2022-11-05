@@ -1,4 +1,4 @@
-package LocationSearch.Domain;
+package VisiCode.Domain;
 
 import com.google.cloud.datastore.Key;
 import org.springframework.cloud.gcp.data.datastore.repository.DatastoreRepository;

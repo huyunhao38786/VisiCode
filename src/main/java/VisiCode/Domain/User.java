@@ -1,4 +1,4 @@
-package LocationSearch.Domain;
+package VisiCode.Domain;
 
 import com.google.cloud.datastore.Key;
 import org.springframework.cloud.gcp.data.datastore.core.mapping.Entity;
@@ -22,6 +22,8 @@ public class User {
         this.username = username;
         this.password = password;
     }
+
+    private Project[] projects;
 
     public String getUsername() {
         return username;

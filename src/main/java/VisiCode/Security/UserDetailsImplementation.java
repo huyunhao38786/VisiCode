@@ -1,6 +1,6 @@
-package LocationSearch.Security;
+package VisiCode.Security;
 
-import LocationSearch.Domain.User;
+import VisiCode.Domain.User;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.google.cloud.datastore.Key;
 import org.springframework.security.core.GrantedAuthority;

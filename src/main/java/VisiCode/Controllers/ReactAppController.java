@@ -1,4 +1,4 @@
-package LocationSearch.Controllers;
+package VisiCode.Controllers;
 
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.RequestMapping;

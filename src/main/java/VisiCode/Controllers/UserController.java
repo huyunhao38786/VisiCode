@@ -1,9 +1,9 @@
-package LocationSearch.Controllers;
+package VisiCode.Controllers;
 
-import LocationSearch.Domain.*;
-import LocationSearch.Payload.LoginRequest;
-import LocationSearch.Payload.MessageResponse;
-import LocationSearch.Payload.SignupRequest;
+import VisiCode.Domain.*;
+import VisiCode.Payload.LoginRequest;
+import VisiCode.Payload.MessageResponse;
+import VisiCode.Payload.SignupRequest;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;

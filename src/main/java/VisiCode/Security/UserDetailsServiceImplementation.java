@@ -1,7 +1,7 @@
-package LocationSearch.Security;
+package VisiCode.Security;
 
-import LocationSearch.Domain.User;
-import LocationSearch.Domain.UserRepository;
+import VisiCode.Domain.User;
+import VisiCode.Domain.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;

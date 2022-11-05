@@ -1,4 +1,4 @@
-package LocationSearch.Payload;
+package VisiCode.Payload;
 
 public class MessageResponse {
     private String message;
