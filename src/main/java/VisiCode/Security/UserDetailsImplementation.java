@@ -14,7 +14,7 @@ import java.util.Objects;
 import java.util.stream.Collectors;
 
 public class UserDetailsImplementation implements UserDetails {
-    private Key id;
+    private Long id;
 
     private String username;
 
@@ -23,7 +23,7 @@ public class UserDetailsImplementation implements UserDetails {
 
     private Collection<? extends GrantedAuthority> authorities;
 
-    public UserDetailsImplementation(Key id, String username, String password,
+    public UserDetailsImplementation(Long id, String username, String password,
                                      Collection<? extends GrantedAuthority> authorities) {
         this.id = id;
         this.username = username;
@@ -48,7 +48,7 @@ public class UserDetailsImplementation implements UserDetails {
         return authorities;
     }
 
-    public Key getId() {
+    public Long getId() {
         return id;
     }
 
