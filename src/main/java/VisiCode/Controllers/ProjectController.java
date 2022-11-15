@@ -117,8 +117,7 @@ public class ProjectController extends UserAuthenticable {
     }
 
     @ResponseBody
-    @DeleteMapping("")
-    @GetMapping("/note/{noteId}")
+    @DeleteMapping("/note/{noteId}")
     public NoteResponse removeNote(@PathVariable Long noteId, @RequestParam String editorId) {
         Project editableProject = getEditable(editorId);
         Note note = noteRepository.findById(noteId).orElseThrow(()->EntityException.noSuchNote(noteId));
