@@ -39,6 +39,10 @@ public class Project {
     public String getViewerId() { return viewerId; }
     public HashSet<Long> getNotes() { return notes; }
 
+    public void clearId() {
+        this.id = -1L;
+    }
+
     public static Project create(String name) {
         return new Project(
                 name,

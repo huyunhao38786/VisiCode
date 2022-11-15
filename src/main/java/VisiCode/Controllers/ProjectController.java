@@ -14,12 +14,10 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
 import javax.validation.Valid;
-import javax.validation.constraints.NotBlank;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.stream.StreamSupport;
 
 @Controller
 @RequestMapping("/api")
@@ -56,6 +54,7 @@ public class ProjectController extends UserAuthenticable {
         projectRepository.save(project);
         if (user.addProject(project.getId())) {
             userRepository.save(user);
+            project.clearId();
             return project;
         } else
             throw EntityException.duplicateProject(request.getName());
@@ -86,6 +85,7 @@ public class ProjectController extends UserAuthenticable {
                 .findByName(name)
                 .orElseThrow(() -> EntityException.noSuchProject(name));
         if (user.getProjects().contains(project.getId())) {
+            project.clearId();
             return project;
         } else
             throw UserException.notOwner(user.getUsername());
@@ -94,7 +94,9 @@ public class ProjectController extends UserAuthenticable {
     @ResponseBody
     @GetMapping("/project/visit/{id}")
     public Project viewOtherProject(@PathVariable String id) {
-        return getViewable(id);
+        Project viewable = getViewable(id);
+        viewable.clearId();
+        return viewable;
     }
 
     @ResponseBody
