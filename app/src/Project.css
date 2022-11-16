@@ -19,3 +19,32 @@
     border-radius: 12px;
     aspect-ratio: 1;
 }
+
+.note.header {
+    border-bottom: 1px gray solid;
+    margin-top: 5px;
+}
+
+.note.header p {
+    display: inline-block;
+}
+
+.note.content {
+    margin-bottom: 5px;
+}
+
+.project.info {
+    margin-top: 5px;
+    border-bottom: 1px gray;
+    width: 100%;
+}
+
+.project.info p {
+    display: inline-block;
+    margin-inline-end: 2em;
+}
+
+.hoverable:hover {
+    cursor:pointer;
+}
+

@@ -66,7 +66,7 @@ class Landing extends Component {
       <div id="landing">
         <button className="operate" onClick={this.addProject}>+</button>
         {(this.state?.projects || []).map(project => (
-          <Link to={`${project}`} onClick={clearEditorLink}>
+          <Link to={`${project}`} onClick={()=>sessionStorage.removeItem('external')}>
             <div className="frame">
               <h3>{project}</h3>
             </div>
@@ -77,4 +77,4 @@ class Landing extends Component {
   }
 }
 
-export default Landing;
+export default withRouter(Landing);
