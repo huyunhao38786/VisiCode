@@ -153,7 +153,10 @@ public class ProjectController extends UserAuthenticable {
                     return projectRepository.findByViewerId(editOrViewId);
                 })
                 .orElseThrow(()->EntityException.cannotViewById(editOrViewId));
-        if (!canSeeEditorId.get()) project.clearEditorId();
+        if (!canSeeEditorId.get()) {
+            project.clearEditorId();
+            project.setPermissionToView();
+        }
         return project;
     }
 

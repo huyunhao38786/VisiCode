@@ -6,7 +6,6 @@ import { Routes, Route, Link } from "react-router-dom";
 import axios from "axios";
 
 import "../Project.css";
-import Project from "./project.component";
 import "bootstrap/dist/css/bootstrap.min.css";
 
 function projApi(str) {
@@ -20,6 +19,7 @@ class Landing extends Component {
       projects: []
     }
     this.addProject = this.addProject.bind(this);
+    this.externalProject = this.externalProject.bind(this);
   }
 
   componentDidMount() {
@@ -46,16 +46,33 @@ class Landing extends Component {
     }
   }
 
+  externalProject() {
+    const link = prompt('Edit Link');
+    if (link) {
+      axios
+        .get(projApi(`/visit/${link}`))
+        .then(response => {
+          if (response.data.error == null) {
+            sessionStorage.setItem("external", link);
+            this.props.router.navigate(`/visit/${response.data.name}`);
+          }
+        });
+    }
+  }
+
   render() {
-    return <div id="landing">
-      <button className={"plus"} onClick={this.addProject}>+</button>
-      {(this.state?.projects || []).map(project => (
-        <Link to={`${project}`}>
-          <div className="frame">
-            <h3>{project}</h3>
-          </div>
-        </Link>)
-      )}
+    return <div>
+      <button onClick={this.externalProject}>Edit or View With Link</button>
+      <div id="landing">
+        <button className="operate" onClick={this.addProject}>+</button>
+        {(this.state?.projects || []).map(project => (
+          <Link to={`${project}`} onClick={clearEditorLink}>
+            <div className="frame">
+              <h3>{project}</h3>
+            </div>
+          </Link>)
+        )}
+      </div>
     </div>
   }
 }

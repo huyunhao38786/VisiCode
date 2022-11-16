@@ -6,6 +6,7 @@ import org.springframework.cloud.gcp.data.datastore.core.mapping.Descendants;
 import org.springframework.cloud.gcp.data.datastore.core.mapping.Entity;
 import org.springframework.cloud.gcp.data.datastore.core.mapping.Field;
 import org.springframework.data.annotation.Id;
+import org.springframework.data.annotation.Transient;
 
 import java.util.HashSet;
 import java.util.UUID;
@@ -25,11 +26,18 @@ public class Project {
     // set here to prevent
     static final int MAX_NOTES = 4096;
 
+    private static final String permissionView = "view";
+    private static final String permissionEdit = "edit";
+
+    @Transient
+    private String permission;
+
     private Project (String name, String editorId, String viewerId, HashSet<Long> notes) {
         this.name = name;
         this.editorId = editorId;
         this.viewerId = viewerId;
         this.notes = notes;
+        this.permission = permissionEdit;
     }
 
     public Long getId() { return id; }
@@ -60,6 +68,14 @@ public class Project {
 
     public boolean removeNote(Note note) {
         return notes.removeIf(n -> n == note.getId());
+    }
+
+    public void setPermissionToView() {
+        permission = permissionView;
+    }
+
+    public void setPermissionToEdit() {
+        permission = permissionEdit;
     }
 
     public static class ProjectSizeException extends EntityException {

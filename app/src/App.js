@@ -65,6 +65,7 @@ class App extends Component {
             <Route path="register" element={<Register />} />
             <Route path="projects" element={<Landing />} />
             <Route path="projects/:projectName" element={<Project />} />
+            <Route path="visit/:projectName" element={<Project />} />
           </Routes>
         </div>
       </div>

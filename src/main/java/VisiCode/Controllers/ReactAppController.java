@@ -7,7 +7,7 @@ import javax.servlet.http.HttpServletRequest;
 
 @Controller
 public class ReactAppController {
-    @RequestMapping(value = { "/", "/login", "/register", "/projects", "/projects/**" })
+    @RequestMapping(value = { "/", "/login", "/register", "/projects", "/projects/**", "/visit", "/visit/**" })
     public String getIndex(HttpServletRequest request) {
         return "/index.html";
     }
