@@ -11,9 +11,11 @@ class AuthService {
         })
         .then(response => {
           if (response.data.error == null) {
-            sessionStorage.setItem("user", JSON.stringify(response.data));
+            sessionStorage.setItem("user", JSON.stringify({
+              username: username,
+              ...response.data
+            }));
           }
-          return response.data;
         });
   }
 
@@ -29,7 +31,7 @@ class AuthService {
   }
 
   getCurrentUser() {
-    return JSON.parse(sessionStorage.getItem('user'));;
+    return JSON.parse(sessionStorage.getItem('user'));
   }
 }
 
