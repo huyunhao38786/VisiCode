@@ -31,6 +31,8 @@ build/
 
 ### VS Code ###
 .vscode/
+# It actually contains config for debugging vs code extension
+!visicode/.vscode 
 
 ### google account key ###
 visi-code-5528cbe2804d.json
@@ -42,3 +44,5 @@ node_modules
 .DS_Store
 
 app/node
+
+visicode/out
