@@ -1,5 +1,6 @@
+// This url should cause an error
 //!<visicode>
-// https://media.tenor.com/7r-BGEoIohkAAAAd/meme-cat.gif
+// http://localhost/api/note/5704134103662592?viewerOrEditorId=dcfa3c50-6541-46b4-a41b-f31f3e5e355c
 //!</visicode>
 
 // (c) Meta Platforms, Inc. and affiliates. Confidential and proprietary.
@@ -28,9 +29,6 @@ void XNNSerializer::serializeAddNode(
   _nodes.push_back(flatbufferNode);
 }
 
-//!<visicode>
-// https://media.tenor.com/sCsJ0l1gxHUAAAAd/cat-meme.gif
-//!</visicode>
 
 void XNNSerializer::serializeTensorValue(
     uint32_t xnn_datatype,
@@ -57,6 +55,11 @@ void XNNSerializer::serializeTensorValue(
   for (auto dim : dims) {
     serialized_dims.push_back(static_cast<uint32_t>(dim));
   }
+
+// Markdown
+//!<visicode>
+// http://localhost:8080/api/note/5637476211228672?viewerOrEditorId=dcfa3c50-6541-46b4-a41b-f31f3e5e355c
+//!</visicode>
 
   const auto tensorValue = CreateXNNTensorValueDirect(
       _builder,
@@ -102,6 +105,7 @@ std::string XNNSerializer::finishAndSerialize(
 } // namespace jit
 } // namespace torch
 
+// Image
 //!<visicode>
-// https://media.npr.org/assets/img/2020/03/27/dualipareal-9f1d672307650164bada30d68c061cbf96777ee2.png
+// http://localhost:8080/api/note/5704134103662592?viewerOrEditorId=dcfa3c50-6541-46b4-a41b-f31f3e5e355c
 //!</visicode>

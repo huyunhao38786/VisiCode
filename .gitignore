@@ -45,4 +45,8 @@ node_modules
 
 app/node
 
+### VS code extension related ###
 visicode/out
+visicode/highlight
+!visicode/highlight/highlight.min.js
+!visicode/highlight/styles/atom-one-dark.min.css

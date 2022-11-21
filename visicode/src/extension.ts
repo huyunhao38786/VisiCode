@@ -3,12 +3,15 @@
 import * as vscode from 'vscode'
 const path = require('node:path')
 const hljs = require('highlight.js') // https://highlightjs.org/
+const http = require('http')
+const md = require('markdown-it')()
+
 
 // This method is called when your extension is activated
 // Your extension is activated the very first time the command is executed
 export function activate(context: vscode.ExtensionContext) {
 	context.subscriptions.push(
-		vscode.commands.registerCommand('visicode-alpha.render', () => {
+		vscode.commands.registerCommand('visicode-alpha.render', async () => {
 			// The code you place here will be executed every time your command is executed
 			let activeEditor: vscode.TextEditor | undefined = vscode.window.activeTextEditor
 			if (typeof activeEditor === 'undefined') {
@@ -21,12 +24,12 @@ export function activate(context: vscode.ExtensionContext) {
 				vscode.ViewColumn.One,
 				{}
 			)
-			panel.webview.html = getHTMLContent(context, activeEditor, panel)
+			panel.webview.html = await getHTMLContent(context, activeEditor, panel)
 		})
 	)
 }
 
-function getHTMLContent(context: vscode.ExtensionContext, editor: vscode.TextEditor, panel: vscode.WebviewPanel): string {
+async function getHTMLContent(context: vscode.ExtensionContext, editor: vscode.TextEditor, panel: vscode.WebviewPanel): string {
 	const cssPath = vscode.Uri.joinPath(context.extensionUri, 'highlight', 'styles', 'atom-one-dark.min.css')
 	const scriptPath = vscode.Uri.joinPath(context.extensionUri, 'highlight', 'highlight.min.js')
 	const cssUri = panel.webview.asWebviewUri(cssPath)
@@ -56,8 +59,9 @@ function getHTMLContent(context: vscode.ExtensionContext, editor: vscode.TextEdi
 				+ `\n</code></pre>\n\n`
 
 		let tag: string = code.substring(startTagPos + "//!<visicode>".length, endTagPos)
-		let url = tag.substring(tag.indexOf("//") + 2)
-		html = 	html + `<img src="${url}">\n\n`
+		let url = tag.substring(tag.indexOf("//") + 2).trim()
+		let content: string = await getHTMLContentFromURL(url)
+		html = 	html + content
 
 		startCodePos = endTagPos + "//!</visicode>".length
 
@@ -73,6 +77,50 @@ function getHTMLContent(context: vscode.ExtensionContext, editor: vscode.TextEdi
 				+ `\n</code></pre>\n\n`	
 
 	return html
+}
+
+async function getHTMLContentFromURL(url: string): Promise<string> {
+	let promise = new Promise((resolve, reject) => {
+		http.get(url, (resp) => {
+			let data = ''
+			
+			// A chunk of data has been received.
+			resp.on('data', (chunk) => {
+				data += chunk;
+			})
+			
+			// The whole response has been received. Print out the result.
+			resp.on('end', () => {
+				resolve(data)
+			})
+			
+			}).on("error", (err) => {
+				reject(new Error(err))
+			})
+	})
+
+	let content
+	try {
+		content = await promise
+		content = JSON.parse(content)
+	} catch(err) {
+		console.log(err)
+		return ''
+	}
+
+	if ('status' in content) {
+		console.log(`Fetch error: ${content.message}. ${content.status}`)
+		return ''
+	}
+
+	if (content.type == "IMAGE")
+		return `<img src="data:image;base64,${content.data}">\n\n`
+	else if (content.type == "MARKDOWN") {
+		return md.render(content.data) + '\n\n'
+	} else {
+		console.log(`Unsupported type: ${content.type}`)
+		return ''
+	}
 }
 
 // This method is called when your extension is deactivated
