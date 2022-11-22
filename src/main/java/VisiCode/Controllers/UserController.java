@@ -17,6 +17,7 @@ import org.springframework.web.bind.annotation.*;
 import javax.validation.Valid;
 import java.util.Collection;
 import java.util.HashSet;
+import java.util.Optional;
 
 @RestController
 @RequestMapping("/api/user")
@@ -41,12 +42,15 @@ public class UserController extends UserAuthenticable {
 
     @PostMapping("/create")
     public MessageResponse registerUser(@Valid @RequestBody SignupRequest signupRequest) {
-        userRepository.findByUsername(signupRequest.getUsername())
-                .orElseThrow(() -> UserException.duplicateUser(signupRequest.getUsername()));
+        Optional<User> findUser = userRepository.findByUsername(signupRequest.getUsername());
 
-        // Create new user's account
-        User user = new User(signupRequest.getUsername(), encoder.encode(signupRequest.getPassword()), new HashSet<>());
-        userRepository.save(user);
-        return MessageResponse.makeMessage("User registered successfully!");
+        if (findUser.isEmpty()) {
+            // Create new user's account
+            User user = new User(signupRequest.getUsername(), encoder.encode(signupRequest.getPassword()), new HashSet<>());
+            userRepository.save(user);
+            return MessageResponse.makeMessage("User registered successfully!");
+        } else {
+            throw UserException.duplicateUser(signupRequest.getUsername());
+        }
     }
 }
