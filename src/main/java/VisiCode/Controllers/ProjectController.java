@@ -18,6 +18,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.stream.StreamSupport;
 
 @Controller
 @RequestMapping("/api")
@@ -81,8 +82,10 @@ public class ProjectController extends UserAuthenticable {
     @GetMapping("/project/{name}")
     public Project viewOwnProject(Authentication auth, @PathVariable String name) {
         User user = getAuthenticated(auth);
-        Project project = projectRepository
-                .findByName(name)
+        Project project = StreamSupport.stream(projectRepository
+                .findAllById(user.getProjects()).spliterator(), false)
+                .filter((p)->p.getName().equals(name))
+                .findFirst()
                 .orElseThrow(() -> EntityException.noSuchProject(name));
         if (user.getProjects().contains(project.getId())) {
             project.clearId();

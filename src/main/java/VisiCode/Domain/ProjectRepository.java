@@ -5,7 +5,6 @@ import org.springframework.cloud.gcp.data.datastore.repository.DatastoreReposito
 import java.util.Optional;
 
 public interface ProjectRepository extends DatastoreRepository<Project, Long> {
-    Optional<Project> findByName(String name);
     Optional<Project> findByEditorId(String editorId);
     Optional<Project> findByViewerId(String viewerId);
 }

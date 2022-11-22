@@ -1,6 +1,7 @@
 package VisiCode.Domain;
 
 import VisiCode.Domain.Exceptions.EntityException;
+import com.fasterxml.jackson.annotation.JsonCreator;
 import org.jetbrains.annotations.NotNull;
 import org.springframework.cloud.gcp.data.datastore.core.mapping.Descendants;
 import org.springframework.cloud.gcp.data.datastore.core.mapping.Entity;
@@ -32,12 +33,19 @@ public class Project {
     @Transient
     private String permission;
 
-    private Project (String name, String editorId, String viewerId, HashSet<Long> notes) {
+    @JsonCreator
+    public Project (String name, String editorId, String viewerId, HashSet<Long> notes) {
         this.name = name;
         this.editorId = editorId;
         this.viewerId = viewerId;
         this.notes = notes;
         this.permission = permissionEdit;
+    }
+
+    public static Project forTest(String name, Long id) {
+        Project p = new Project(name, "editor " + id, "viewer " + id, new HashSet<>());
+        p.id = id;
+        return p;
     }
 
     public Long getId() { return id; }
