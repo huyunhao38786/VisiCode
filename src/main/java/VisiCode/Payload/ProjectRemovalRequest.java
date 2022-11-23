@@ -4,15 +4,12 @@ import javax.validation.constraints.NotBlank;
 
 public class ProjectRemovalRequest {
 
-    @NotBlank
     private Long id;
 
-    private ProjectRemovalRequest(Long id) {
-        this.id = id;
-    }
-
     public static ProjectRemovalRequest forTest(Long id) {
-        return new ProjectRemovalRequest(id);
+        ProjectRemovalRequest r = new ProjectRemovalRequest();
+        r.id = id;
+        return r;
     }
 
     public Long getId() {
