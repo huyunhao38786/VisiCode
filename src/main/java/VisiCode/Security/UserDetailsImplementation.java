@@ -2,7 +2,6 @@ package VisiCode.Security;
 
 import VisiCode.Domain.User;
 import com.fasterxml.jackson.annotation.JsonIgnore;
-import com.google.cloud.datastore.Key;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -11,17 +10,16 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Objects;
-import java.util.stream.Collectors;
 
 public class UserDetailsImplementation implements UserDetails {
-    private Long id;
+    private final Long id;
 
-    private String username;
+    private final String username;
 
     @JsonIgnore
-    private String password;
+    private final String password;
 
-    private Collection<? extends GrantedAuthority> authorities;
+    private final Collection<? extends GrantedAuthority> authorities;
 
     public UserDetailsImplementation(Long id, String username, String password,
                                      Collection<? extends GrantedAuthority> authorities) {

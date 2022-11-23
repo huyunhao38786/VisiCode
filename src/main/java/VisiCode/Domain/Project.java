@@ -24,7 +24,7 @@ public class Project {
     private final HashSet<Long> notes;
 
     // set here to prevent
-    static final int MAX_NOTES = 4096;
+    public static final int MAX_NOTES = 4096;
 
     private static final String permissionView = "view";
     private static final String permissionEdit = "edit";
@@ -33,7 +33,7 @@ public class Project {
     private String permission;
 
     @JsonCreator
-    private Project (
+    private Project(
             @JsonProperty("name") String name,
             @JsonProperty("editorId") String editorId,
             @JsonProperty("viewerId") String viewerId,
@@ -45,18 +45,39 @@ public class Project {
         this.permission = permissionEdit;
     }
 
+    public static Project forTest(String name) {
+        return forTest(name, 0L);
+    }
+
     public static Project forTest(String name, Long id) {
         Project p = new Project(name, "editor_" + id, "viewer_" + id, new HashSet<>());
         p.id = id;
         return p;
     }
 
-    public Long getId() { return id; }
-    public String getName() { return name; }
-    public String getEditorId() { return editorId; }
-    public void clearEditorId() { editorId = null; }
-    public String getViewerId() { return viewerId; }
-    public HashSet<Long> getNotes() { return notes; }
+    public Long getId() {
+        return id;
+    }
+
+    public String getName() {
+        return name;
+    }
+
+    public String getEditorId() {
+        return editorId;
+    }
+
+    public void clearEditorId() {
+        editorId = null;
+    }
+
+    public String getViewerId() {
+        return viewerId;
+    }
+
+    public HashSet<Long> getNotes() {
+        return notes;
+    }
 
     public void clearId() {
         this.id = -1L;

@@ -3,9 +3,7 @@ package VisiCode.Domain;
 import VisiCode.Domain.Exceptions.EntityException;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.google.cloud.datastore.Key;
 import org.apache.commons.codec.binary.Base64;
-import org.jetbrains.annotations.NotNull;
 import org.springframework.cloud.gcp.data.datastore.core.mapping.Entity;
 import org.springframework.cloud.gcp.data.datastore.core.mapping.Unindexed;
 import org.springframework.data.annotation.Id;
@@ -16,18 +14,15 @@ import java.io.IOException;
 @Entity
 public class Note {
 
-    public enum ENoteType {
-        MARKDOWN,
-        IMAGE
-    }
-
-    @Id
-    private Long id;
-
+    // https://cloud.google.com/datastore/docs/concepts/limits, minus two longs
+    public static final int MAX_BLOB_SIZE = 1048572 - 8 - 8;
+    public static final int MAX_CHAR_COUNT = MAX_BLOB_SIZE / 2;
     private final ENoteType type;
 
     @Unindexed
     String data;
+    @Id
+    private Long id;
 
     @JsonCreator
     private Note(
@@ -36,14 +31,6 @@ public class Note {
         this.type = type;
         this.data = data;
     }
-
-    public void fillIdForTest(Long id) { this.id = id; }
-
-    public Long getId() { return id; }
-
-    // https://cloud.google.com/datastore/docs/concepts/limits, minus two longs
-    public static final int MAX_BLOB_SIZE = 1048572 - 8 - 8;
-    public static final int MAX_CHAR_COUNT = MAX_BLOB_SIZE / 2;
 
     public static Note makeTextNote(String text) throws BlobSizeException {
         // here we assume 1 character is 2 bytes, Java treats Strings messily so this is not the definitive answer
@@ -57,10 +44,18 @@ public class Note {
         return new Note(ENoteType.IMAGE, Base64.encodeBase64String(file.getBytes()));
     }
 
-    public static Note forText(Long id) {
+    public static Note forTest(Long id) {
         Note n = makeTextNote("For testing");
         n.id = id;
         return n;
+    }
+
+    public void fillIdForTest(Long id) {
+        this.id = id;
+    }
+
+    public Long getId() {
+        return id;
     }
 
     public String getType() {
@@ -71,17 +66,14 @@ public class Note {
         return data;
     }
 
+    public enum ENoteType {
+        MARKDOWN,
+        IMAGE
+    }
+
     public static class BlobSizeException extends EntityException {
         public BlobSizeException(long size) {
             super(String.format("Note size too large: %s", size));
         }
-    }
-
-    @Override
-    public boolean equals(@NotNull Object other) {
-        if (other instanceof Note) {
-            return ((Note) other).id.equals(id);
-        } else
-            return false;
     }
 }

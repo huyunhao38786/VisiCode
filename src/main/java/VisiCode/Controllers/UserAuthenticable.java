@@ -18,6 +18,6 @@ public class UserAuthenticable {
     protected User getAuthenticated(Authentication auth) {
         if (auth == null) throw UserException.noUser(null);
         String username = auth.getName();
-        return userRepository.findByUsername(username).orElseThrow(()->UserException.noUser(username));
+        return userRepository.findByUsername(username).orElseThrow(() -> UserException.noUser(username));
     }
 }

@@ -1,7 +1,5 @@
 package VisiCode.Domain;
 
-import com.google.cloud.datastore.Key;
-import org.springframework.cloud.gcp.data.datastore.core.mapping.Descendants;
 import org.springframework.cloud.gcp.data.datastore.core.mapping.Entity;
 import org.springframework.data.annotation.Id;
 
@@ -24,7 +22,9 @@ public class User {
         this.projects = projects;
     }
 
-    public HashSet<Long> getProjects() { return projects; }
+    public HashSet<Long> getProjects() {
+        return projects;
+    }
 
     public boolean removeProject(Long projectId) {
         return projects.remove(projectId);

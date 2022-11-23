@@ -68,7 +68,7 @@ class ProjectControllerTest {
     ObjectMapper objectMapper = new ObjectMapper();
     ObjectWriter objectWriter = objectMapper.writer();
     Authentication authentication;
-    private Project p1, p2, p3;
+    private Project p1, p2, p3, pn1, pnMax;
     private Note n1;
     @Autowired
     private WebApplicationContext context;
@@ -83,9 +83,16 @@ class ProjectControllerTest {
         p2 = Project.forTest("Project2", 2L);
         p3 = Project.forTest("Project3", 3L);
 
-        n1 = Note.makeTextNote("To be deleted");
+        n1 = Note.forTest(1L);
 
-        // when(projectRepository.findById(p1.getId())).thenReturn(Optional.of(p1));
+        pn1 = Project.forTest("ProjectWithNote1");
+        pn1.addNote(n1);
+
+        pnMax = Project.forTest("ProjectFull");
+
+        for (int i = 0; i < Project.MAX_NOTES; i++) {
+            pnMax.addNote(Note.forTest((long) i + 1000));
+        }
     }
 
     @Test
@@ -333,7 +340,7 @@ class ProjectControllerTest {
                 MockMvcRequestBuilders.post("/api/note/text?editorId=" + p1.getViewerId())
                         .contentType(MediaType.TEXT_PLAIN)
                         .content(SMALL)
-        ).andExpect(status().isOk());
+        ).andExpect(status().isBadRequest());
     }
 
     @Test
@@ -344,6 +351,16 @@ class ProjectControllerTest {
                         .contentType(MediaType.TEXT_PLAIN)
                         .content(SMALL)
         ).andExpect(status().isOk());
+    }
+
+    @Test
+    void AddNoteTooMany() throws Exception {
+        when(projectRepository.findByEditorId(pnMax.getEditorId())).thenReturn(Optional.of(pnMax));
+        mockMvc.perform(
+                MockMvcRequestBuilders.post("/api/note/text?editorId=" + pnMax.getEditorId())
+                        .contentType(MediaType.TEXT_PLAIN)
+                        .content(SMALL)
+        ).andExpect(status().isBadRequest());
     }
 
     @Test
@@ -407,30 +424,97 @@ class ProjectControllerTest {
 
     @Test
     void removeNoteNoPermission() throws Exception {
+        when(noteRepository.findById(n1.getId())).thenReturn(Optional.of(n1));
         mockMvc.perform(
                 MockMvcRequestBuilders
-                        .delete("/api/note/" + n1.getId() + "?editorId=" + p1.getEditorId())
-                        .contentType(MediaType.TEXT_PLAIN)
-                        .content(SMALL)
-        ).andExpect(status().isOk());
+                        .delete("/api/note/" + n1.getId() + "?editorId=" + pn1.getEditorId())
+        ).andExpect(status().isBadRequest());
     }
 
     @Test
     void removeNoteViewer() throws Exception {
-
+        when(projectRepository.findByViewerId(pn1.getViewerId())).thenReturn(Optional.of(pn1));
+        when(noteRepository.findById(n1.getId())).thenReturn(Optional.of(n1));
+        mockMvc.perform(
+                MockMvcRequestBuilders
+                        .delete("/api/note/" + n1.getId() + "?editorId=" + pn1.getViewerId())
+        ).andExpect(status().isBadRequest());
     }
 
     @Test
     void removeNoteNonExistent() throws Exception {
+        when(projectRepository.findByEditorId(pn1.getEditorId())).thenReturn(Optional.of(pn1));
+        mockMvc.perform(
+                MockMvcRequestBuilders
+                        .delete("/api/note/" + n1.getId() + "?editorId=" + pn1.getEditorId())
+        ).andExpect(status().isBadRequest());
+    }
 
+    @Test
+    void removeNoteNotInProject() throws Exception {
+        when(projectRepository.findByEditorId(p1.getEditorId())).thenReturn(Optional.of(p1));
+        when(noteRepository.findById(n1.getId())).thenReturn(Optional.of(n1));
+        mockMvc.perform(
+                MockMvcRequestBuilders
+                        .delete("/api/note/" + n1.getId() + "?editorId=" + pn1.getEditorId())
+        ).andExpect(status().isBadRequest());
     }
 
     @Test
     void removeNoteValid() throws Exception {
-
+        when(projectRepository.findByEditorId(pn1.getEditorId())).thenReturn(Optional.of(pn1));
+        when(noteRepository.findById(n1.getId())).thenReturn(Optional.of(n1));
+        mockMvc.perform(
+                MockMvcRequestBuilders
+                        .delete("/api/note/" + n1.getId() + "?editorId=" + pn1.getEditorId())
+        ).andExpect(status().isOk());
     }
 
     @Test
-    void viewNote() {
+    void viewNoteNoPermission() throws Exception {
+        when(noteRepository.findById(n1.getId())).thenReturn(Optional.of(n1));
+        mockMvc.perform(
+                MockMvcRequestBuilders
+                        .get("/api/note/" + n1.getId() + "?viewerOrEditorId=" + pn1.getViewerId())
+        ).andExpect(status().isBadRequest());
+    }
+
+    @Test
+    void viewNoteNonExistent() throws Exception {
+        when(projectRepository.findByViewerId(pn1.getViewerId())).thenReturn(Optional.of(pn1));
+        mockMvc.perform(
+                MockMvcRequestBuilders
+                        .get("/api/note/" + n1.getId() + "?viewerOrEditorId=" + pn1.getViewerId())
+        ).andExpect(status().isBadRequest());
+    }
+
+    @Test
+    void viewNoteViewer() throws Exception {
+        when(projectRepository.findByViewerId(pn1.getViewerId())).thenReturn(Optional.of(pn1));
+        when(noteRepository.findById(n1.getId())).thenReturn(Optional.of(n1));
+        String resp = mockMvc.perform(
+                MockMvcRequestBuilders
+                        .get("/api/note/" + n1.getId() + "?viewerOrEditorId=" + pn1.getViewerId())
+        ).andExpect(status().isOk()).andReturn().getResponse().getContentAsString();
+
+        Note note = objectMapper.readValue(resp, Note.class);
+        assertEquals(note.getType(), n1.getType());
+        assertEquals(note.getData(), n1.getData());
+        assertEquals(note.getId(), n1.getId());
+    }
+
+    @Test
+    void viewNoteEditor() throws Exception {
+        when(projectRepository.findByEditorId(pn1.getEditorId())).thenReturn(Optional.of(pn1));
+        when(noteRepository.findById(n1.getId())).thenReturn(Optional.of(n1));
+        String resp = mockMvc.perform(
+                MockMvcRequestBuilders
+                        .get("/api/note/" + n1.getId() + "?viewerOrEditorId=" + pn1.getEditorId())
+        ).andExpect(status().isOk()).andReturn().getResponse().getContentAsString();
+
+        Note note = objectMapper.readValue(resp, Note.class);
+        assertEquals(note.getType(), n1.getType());
+        assertEquals(note.getData(), n1.getData());
+        assertEquals(note.getId(), n1.getId());
     }
 }

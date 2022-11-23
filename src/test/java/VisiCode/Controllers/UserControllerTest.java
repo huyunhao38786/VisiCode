@@ -1,7 +1,8 @@
 package VisiCode.Controllers;
 
-import VisiCode.Domain.*;
 import VisiCode.Domain.Exceptions.UserException;
+import VisiCode.Domain.User;
+import VisiCode.Domain.UserRepository;
 import VisiCode.Payload.LoginRequest;
 import VisiCode.Payload.SignupRequest;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -28,7 +29,8 @@ import org.springframework.web.util.NestedServletException;
 import java.util.HashSet;
 import java.util.Optional;
 
-import static org.hamcrest.Matchers.*;
+import static org.hamcrest.Matchers.notNullValue;
+import static org.hamcrest.Matchers.nullValue;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.Mockito.mock;
@@ -103,7 +105,7 @@ class UserControllerTest {
                 }
         );
 
-        assert(e.getCause() instanceof UserException);
+        assert (e.getCause() instanceof UserException);
     }
 
     @Test
@@ -133,13 +135,13 @@ class UserControllerTest {
         Authentication authentication = mock(Authentication.class);
         authentication.setAuthenticated(true);
 
-        AuthenticationException exception= mock(AuthenticationException.class);
+        AuthenticationException exception = mock(AuthenticationException.class);
 
-        Mockito.when(authenticationManager.authenticate(argThat((token)->true))).thenThrow(exception);
+        Mockito.when(authenticationManager.authenticate(argThat((token) -> true))).thenThrow(exception);
 
         Mockito.when(userRepository.findByUsername(USERNAME)).thenReturn(Optional.of(new User(USERNAME, PLACEHOLDER_PASSWORD, new HashSet<>())));
 
-        NestedServletException e = assertThrows(NestedServletException.class, ()->{
+        NestedServletException e = assertThrows(NestedServletException.class, () -> {
             mockMvc.perform(
                             MockMvcRequestBuilders
                                     .post("/api/user/login")
@@ -150,7 +152,7 @@ class UserControllerTest {
                     .andExpect(MockMvcResultMatchers.jsonPath("$.error", nullValue()));
         });
 
-        assert(e.getCause() instanceof AuthenticationException);
+        assert (e.getCause() instanceof AuthenticationException);
     }
 
 }

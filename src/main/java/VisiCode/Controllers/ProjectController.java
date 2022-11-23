@@ -1,11 +1,13 @@
 package VisiCode.Controllers;
 
-import VisiCode.Domain.*;
 import VisiCode.Domain.Exceptions.EntityException;
 import VisiCode.Domain.Exceptions.UserException;
+import VisiCode.Domain.*;
 import VisiCode.Payload.ProjectCreationRequest;
+import VisiCode.Payload.ProjectRemovalRequest;
 import com.google.cloud.datastore.DatastoreException;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
@@ -37,7 +39,7 @@ public class ProjectController extends UserAuthenticable {
         User user = getAuthenticated(auth);
         Iterable<Project> existingProjects = projectRepository.findAllById(user.getProjects());
         List<String> names = new ArrayList<>();
-        for(Project project : existingProjects)
+        for (Project project : existingProjects)
             names.add(project.getName());
         return names;
     }
@@ -65,30 +67,30 @@ public class ProjectController extends UserAuthenticable {
             throw EntityException.duplicateProject(request.getName());
     }
 
-//    @PostMapping("/project/remove")
-//    @ResponseStatus(value = HttpStatus.OK)
-//    public void removeProject(Authentication auth, @RequestBody @Valid ProjectRemovalRequest request) {
-//        User user = getAuthenticated(auth);
-//
-//        Long id = request.getId();
-//        if (user.removeProject(id)) {
-//            userRepository.save(user);
-//            Project project = projectRepository.findById(id).orElseThrow(() -> EntityException.noSuchProject(id));
-//            projectRepository.deleteById(id);
-//            for(Long i : project.getNotes()) {
-//                noteRepository.deleteById(i);
-//            }
-//        } else
-//            throw UserException.notOwner(user.getUsername());
-//    }
+    @PostMapping("/project/remove")
+    @ResponseStatus(value = HttpStatus.OK)
+    public void removeProject(Authentication auth, @RequestBody @Valid ProjectRemovalRequest request) {
+        User user = getAuthenticated(auth);
+
+        Long id = request.getId();
+        if (user.removeProject(id)) {
+            userRepository.save(user);
+            Project project = projectRepository.findById(id).orElseThrow(() -> EntityException.noSuchProject(id));
+            projectRepository.deleteById(id);
+            for (Long i : project.getNotes()) {
+                noteRepository.deleteById(i);
+            }
+        } else
+            throw UserException.notOwner(user.getUsername());
+    }
 
     @ResponseBody
     @GetMapping("/project/{name}")
     public Project viewOwnProject(Authentication auth, @PathVariable String name) {
         User user = getAuthenticated(auth);
         Optional<Project> findProject = StreamSupport.stream(projectRepository
-                .findAllById(user.getProjects()).spliterator(), false)
-                .filter((p)->p.getName().equals(name))
+                        .findAllById(user.getProjects()).spliterator(), false)
+                .filter((p) -> p.getName().equals(name))
                 .findFirst();
         if (findProject.isEmpty()) throw EntityException.noSuchProject(name);
 
@@ -131,12 +133,13 @@ public class ProjectController extends UserAuthenticable {
     @DeleteMapping("/note/{noteId}")
     public void removeNote(@PathVariable Long noteId, @RequestParam String editorId) {
         Project editableProject = getEditable(editorId);
-        Note note = noteRepository.findById(noteId).orElseThrow(()->EntityException.noSuchNote(noteId));
+        Note note = noteRepository.findById(noteId).orElseThrow(() -> EntityException.noSuchNote(noteId));
         if (editableProject.removeNote(note)) {
             projectRepository.save(editableProject);
             noteRepository.deleteById(note.getId());
+        } else {
+            throw EntityException.noSuchNote(noteId);
         }
-        throw EntityException.noSuchNote(noteId);
     }
 
     @ResponseBody
@@ -150,7 +153,7 @@ public class ProjectController extends UserAuthenticable {
     }
 
     private Project getEditable(String editorId) {
-        return projectRepository.findByEditorId(editorId).orElseThrow(()->EntityException.cannotEditById(editorId));
+        return projectRepository.findByEditorId(editorId).orElseThrow(() -> EntityException.cannotEditById(editorId));
     }
 
     private Project getViewable(String editOrViewId) {
@@ -160,7 +163,7 @@ public class ProjectController extends UserAuthenticable {
                     canSeeEditorId.set(false);
                     return projectRepository.findByViewerId(editOrViewId);
                 })
-                .orElseThrow(()->EntityException.cannotViewById(editOrViewId));
+                .orElseThrow(() -> EntityException.cannotViewById(editOrViewId));
         if (!canSeeEditorId.get()) {
             project.clearEditorId();
             project.setPermissionToView();
@@ -169,13 +172,13 @@ public class ProjectController extends UserAuthenticable {
     }
 
     private void addNote(Project project, Note note) {
-        try {
-            noteRepository.save(note);
-        } catch (DatastoreException e) {
-            throw new Note.BlobSizeException(note.getData().length());
-        }
         if (project.addNote(note)) {
-            projectRepository.save(project);
+            try {
+                noteRepository.save(note);
+                projectRepository.save(project);
+            } catch (DatastoreException e) {
+                throw new Note.BlobSizeException(note.getData().length());
+            }
         } else
             throw EntityException.duplicateNote(note.getId());
     }

@@ -8,10 +8,6 @@ public class MessageResponse {
         return new MessageResponse(message, null);
     }
 
-    public static MessageResponse makeError(String error) {
-        return new MessageResponse(null, error);
-    }
-
     private MessageResponse(String message, String error) {
         this.message = message;
         this.error = error;
@@ -21,5 +17,7 @@ public class MessageResponse {
         return message;
     }
 
-    public String getError() { return error; }
+    public String getError() {
+        return error;
+    }
 }

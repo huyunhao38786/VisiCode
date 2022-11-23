@@ -1,21 +1,19 @@
 package VisiCode.Controllers;
 
-import VisiCode.Domain.*;
 import VisiCode.Domain.Exceptions.UserException;
+import VisiCode.Domain.User;
+import VisiCode.Domain.UserRepository;
 import VisiCode.Payload.LoginRequest;
 import VisiCode.Payload.MessageResponse;
 import VisiCode.Payload.SignupRequest;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
-import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.*;
 
 import javax.validation.Valid;
-import java.util.Collection;
 import java.util.HashSet;
 import java.util.Optional;
 
