@@ -1,6 +1,8 @@
 package VisiCode.Domain;
 
 import VisiCode.Domain.Exceptions.EntityException;
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.cloud.datastore.Key;
 import org.apache.commons.codec.binary.Base64;
 import org.jetbrains.annotations.NotNull;
@@ -27,26 +29,38 @@ public class Note {
     @Unindexed
     String data;
 
-    private Note(ENoteType type, String data) {
+    @JsonCreator
+    private Note(
+            @JsonProperty("type") ENoteType type,
+            @JsonProperty("data") String data) {
         this.type = type;
         this.data = data;
     }
+
+    public void fillIdForTest(Long id) { this.id = id; }
 
     public Long getId() { return id; }
 
     // https://cloud.google.com/datastore/docs/concepts/limits, minus two longs
     public static final int MAX_BLOB_SIZE = 1048572 - 8 - 8;
+    public static final int MAX_CHAR_COUNT = MAX_BLOB_SIZE / 2;
 
     public static Note makeTextNote(String text) throws BlobSizeException {
         // here we assume 1 character is 2 bytes, Java treats Strings messily so this is not the definitive answer
         // the worst case is the note could not be uploaded due to size issue, this will throw a harmless exception in the controller
-        if (text.length() * 2 > MAX_BLOB_SIZE) throw new BlobSizeException(text.length() * 2L);
+        if (text.length() > MAX_CHAR_COUNT) throw new BlobSizeException(text.length() * 2L);
         return new Note(ENoteType.MARKDOWN, text);
     }
 
     public static Note makeFileNote(MultipartFile file) throws BlobSizeException, IOException {
         if (file.getSize() > MAX_BLOB_SIZE) throw new BlobSizeException(file.getSize());
         return new Note(ENoteType.IMAGE, Base64.encodeBase64String(file.getBytes()));
+    }
+
+    public static Note forText(Long id) {
+        Note n = makeTextNote("For testing");
+        n.id = id;
+        return n;
     }
 
     public String getType() {

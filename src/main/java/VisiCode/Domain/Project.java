@@ -2,8 +2,7 @@ package VisiCode.Domain;
 
 import VisiCode.Domain.Exceptions.EntityException;
 import com.fasterxml.jackson.annotation.JsonCreator;
-import org.jetbrains.annotations.NotNull;
-import org.springframework.cloud.gcp.data.datastore.core.mapping.Descendants;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import org.springframework.cloud.gcp.data.datastore.core.mapping.Entity;
 import org.springframework.cloud.gcp.data.datastore.core.mapping.Field;
 import org.springframework.data.annotation.Id;
@@ -34,7 +33,11 @@ public class Project {
     private String permission;
 
     @JsonCreator
-    public Project (String name, String editorId, String viewerId, HashSet<Long> notes) {
+    private Project (
+            @JsonProperty("name") String name,
+            @JsonProperty("editorId") String editorId,
+            @JsonProperty("viewerId") String viewerId,
+            @JsonProperty("notes") HashSet<Long> notes) {
         this.name = name;
         this.editorId = editorId;
         this.viewerId = viewerId;
@@ -43,7 +46,7 @@ public class Project {
     }
 
     public static Project forTest(String name, Long id) {
-        Project p = new Project(name, "editor " + id, "viewer " + id, new HashSet<>());
+        Project p = new Project(name, "editor_" + id, "viewer_" + id, new HashSet<>());
         p.id = id;
         return p;
     }
@@ -67,7 +70,7 @@ public class Project {
                 new HashSet<>());
     }
 
-    public boolean addNote(Note note) throws ProjectSizeException {
+    public boolean addNote(Note note) {
         if (notes.add(note.getId())) {
             if (notes.size() > MAX_NOTES) throw new ProjectSizeException();
             return true;
@@ -91,4 +94,5 @@ public class Project {
             super(String.format("Project size cannot exceed %d notes", MAX_NOTES));
         }
     }
+
 }

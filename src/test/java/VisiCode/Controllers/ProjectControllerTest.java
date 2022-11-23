@@ -4,7 +4,6 @@ import VisiCode.Domain.*;
 import VisiCode.Payload.ProjectCreationRequest;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.ObjectWriter;
-import org.hamcrest.Matcher;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.runner.RunWith;
@@ -15,19 +14,24 @@ import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMock
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.http.MediaType;
+import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.web.servlet.MockMvc;
-import org.springframework.test.web.servlet.MvcResult;
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers;
 import org.springframework.web.context.WebApplicationContext;
 
-import java.util.*;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Objects;
+import java.util.Optional;
 import java.util.stream.StreamSupport;
 
-import static org.hamcrest.Matchers.*;
+import static org.hamcrest.Matchers.hasItem;
+import static org.hamcrest.Matchers.hasSize;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.when;
@@ -38,41 +42,50 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @RunWith(MockitoJUnitRunner.class)
 class ProjectControllerTest {
 
-    public static final String USERNAME = "test";
-    private static final String EMPTY = "";
-    private static final String SMALL = "0".repeat(Note.MAX_BLOB_SIZE / 1024);
-    private static final String LARGE = "0".repeat(Note.MAX_BLOB_SIZE);
-    private static final String OVERSIZED = "0".repeat(Note.MAX_BLOB_SIZE + 1);
-    private static final String OVERLARGE = "0".repeat(Note.MAX_BLOB_SIZE * 2);
+    public static final String USERNAME = "test user";
+    private static final String SMALL = "0".repeat(10);
+    private static final String LARGE = "0".repeat(Note.MAX_CHAR_COUNT);
+    private static final String OVERSIZED = "0".repeat(Note.MAX_CHAR_COUNT + 1);
 
-    private static final Project p1 = Project.forTest("Project 1", 1L);
-    private static final Project p2 = Project.forTest("Project 2", 2L);
-    private static final Project p3 = Project.forTest("Project 3", 3L);
-
-    @Autowired
-    private WebApplicationContext context;
-
-    @Autowired
-    private MockMvc mockMvc;
-
+    private static final MockMultipartFile FSMALL = new MockMultipartFile(
+            "file", "FSMALL.jpg", MediaType.IMAGE_JPEG_VALUE, new byte[10]
+    );
+    private static final MockMultipartFile FLARGE = new MockMultipartFile(
+            "file", "FLARGE.jpg", MediaType.IMAGE_JPEG_VALUE, new byte[Note.MAX_BLOB_SIZE]
+    );
+    private static final MockMultipartFile FOVERSIZED = new MockMultipartFile(
+            "file", "FOVERSIZED.jpg", MediaType.IMAGE_JPEG_VALUE, new byte[Note.MAX_BLOB_SIZE + 1]
+    );
+    private static final MockMultipartFile FEXTRALARGE = new MockMultipartFile(
+            "file", "FEXTRALARGE.jpg", MediaType.IMAGE_JPEG_VALUE, new byte[20480 * 1024] // 20MB
+    );
     @MockBean
     ProjectRepository projectRepository;
-
     @MockBean
     NoteRepository noteRepository;
-
     @MockBean
     UserRepository userRepository;
-
     ObjectMapper objectMapper = new ObjectMapper();
     ObjectWriter objectWriter = objectMapper.writer();
-
     Authentication authentication;
+    private Project p1, p2, p3;
+    private Note n1;
+    @Autowired
+    private WebApplicationContext context;
+    @Autowired
+    private MockMvc mockMvc;
 
     @BeforeEach
     void setUp() {
         MockitoAnnotations.openMocks(this);
-        when(projectRepository.findById(p1.getId())).thenReturn(Optional.of(p1));
+
+        p1 = Project.forTest("Project1", 1L);
+        p2 = Project.forTest("Project2", 2L);
+        p3 = Project.forTest("Project3", 3L);
+
+        n1 = Note.makeTextNote("To be deleted");
+
+        // when(projectRepository.findById(p1.getId())).thenReturn(Optional.of(p1));
     }
 
     @Test
@@ -114,7 +127,7 @@ class ProjectControllerTest {
     @WithMockUser(USERNAME)
     void myProjectsMany() throws Exception {
         when(userRepository.findByUsername(USERNAME)).thenReturn(Optional.of(new User(USERNAME, "", new HashSet<>())));
-        when(projectRepository.findAllById(argThat(id->true))).thenReturn(List.of(p1, p2, p3));
+        when(projectRepository.findAllById(argThat(id -> true))).thenReturn(List.of(p1, p2, p3));
         mockMvc.perform(
                         MockMvcRequestBuilders
                                 .get("/api/project"))
@@ -131,108 +144,290 @@ class ProjectControllerTest {
         when(userRepository.findByUsername(USERNAME)).thenReturn(Optional.of(new User(USERNAME, "", new HashSet<>())));
         final String PROJECT_NAME = "Create one project";
         String resp = mockMvc.perform(
-                MockMvcRequestBuilders
-                        .post("/api/project/create")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectWriter.writeValueAsString(ProjectCreationRequest.forTest(PROJECT_NAME))))
+                        MockMvcRequestBuilders
+                                .post("/api/project/create")
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content(objectWriter.writeValueAsString(ProjectCreationRequest.forTest(PROJECT_NAME))))
                 .andExpect(status().isOk())
                 .andReturn().getResponse().getContentAsString();
-//        Project p = objectMapper.readValue(resp, Project.class);
-//        assertEquals(p.getName(), PROJECT_NAME);
-//        assertEquals(p.getEditorId().length(), 36);
-//        assertEquals(p.getViewerId().length(), 36);
-//        assertEquals(p.getId(), -1);
-//        assertEquals(p.getNotes().size(), 0);
+        Project p = objectMapper.readValue(resp, Project.class);
+        assertEquals(p.getName(), PROJECT_NAME);
+        assertEquals(p.getEditorId().length(), 36);
+        assertEquals(p.getViewerId().length(), 36);
+        assertEquals(p.getId(), -1);
+        assertEquals(p.getNotes().size(), 0);
     }
 
     @Test
-    void removeProjectNonExistent() {
+    @WithMockUser(USERNAME)
+    void createProjectTooMany() throws Exception {
+        HashSet<Long> projects = new HashSet<>(ProjectController.MAX_PROJECT_COUNT);
+        for (int i = 0; i < ProjectController.MAX_PROJECT_COUNT; i++) {
+            projects.add((long) i);
+        }
+
+        when(userRepository.findByUsername(USERNAME)).thenReturn(Optional.of(new User(USERNAME, "", projects)));
+        final String PROJECT_NAME = "Create one project";
+        mockMvc.perform(
+                        MockMvcRequestBuilders
+                                .post("/api/project/create")
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content(objectWriter.writeValueAsString(ProjectCreationRequest.forTest(PROJECT_NAME))))
+                .andExpect(status().isBadRequest());
+    }
+
+//    @Test
+//    @WithMockUser(USERNAME)
+//    void removeProjectNonExistent() throws Exception {
+//        mockMvc.perform(
+//                        MockMvcRequestBuilders
+//                                .post("/api/project/remove")
+//                                .contentType(MediaType.APPLICATION_JSON)
+//                                .content(objectWriter.writeValueAsString(ProjectRemovalRequest.forTest(0L))))
+//                .andExpect(status().isBadRequest());
+//    }
+//
+//    @Test
+//    void removeProjectUnauthorized() throws Exception {
+//        mockMvc.perform(
+//                        MockMvcRequestBuilders
+//                                .post("/api/project/remove")
+//                                .contentType(MediaType.APPLICATION_JSON)
+//                                .content(objectWriter.writeValueAsString(ProjectRemovalRequest.forTest(0L))))
+//                .andExpect(status().isBadRequest());
+//    }
+//
+//    @Test
+//    @WithMockUser(USERNAME)
+//    void removeProjectValid() throws Exception {
+//        when(userRepository.findByUsername(USERNAME)).thenReturn(Optional.of(new User(USERNAME, "", new HashSet<>(List.of(1L)))));
+//
+//        RequestBuilder req = MockMvcRequestBuilders
+//                .post("/api/project/remove")
+//                .contentType(MediaType.APPLICATION_JSON)
+//                .content(objectWriter.writeValueAsString(ProjectRemovalRequest.forTest(1L)));
+//
+//        mockMvc.perform(req)
+//                .andExpect(status().isOk());
+//    }
+
+    @Test
+    void viewOwnProjectUnauthorized() throws Exception {
+        when(userRepository.findByUsername(USERNAME)).thenReturn(Optional.of(new User(USERNAME, "", new HashSet<>(List.of(p1.getId())))));
+        when(projectRepository.findById(p1.getId())).thenReturn(Optional.of(p1));
+
+        mockMvc.perform(
+                        MockMvcRequestBuilders
+                                .get("/api/project/" + p1.getName()))
+                .andExpect(status().isBadRequest());
     }
 
     @Test
-    void removeProjectUnauthorized() {
+    @WithMockUser(USERNAME)
+    void viewOwnProjectNonExistent() throws Exception {
+        when(userRepository.findByUsername(USERNAME)).thenReturn(Optional.of(new User(USERNAME, "", new HashSet<>(List.of(p1.getId())))));
+        when(projectRepository.findById(p1.getId())).thenReturn(Optional.of(p1));
+
+        mockMvc.perform(
+                        MockMvcRequestBuilders
+                                .get("/api/project/" + p1.getName()))
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    @WithMockUser(USERNAME)
+    void viewOwnProjectValid() throws Exception {
+        when(userRepository.findByUsername(USERNAME)).thenReturn(Optional.of(new User(USERNAME, "", new HashSet<>(List.of(p1.getId())))));
+        when(projectRepository.findAllById(argThat(a -> true))).thenReturn(List.of(p1));
+
+        String resp = mockMvc.perform(
+                        MockMvcRequestBuilders
+                                .get("/api/project/" + p1.getName()))
+                .andExpect(status().isOk())
+                .andReturn().getResponse().getContentAsString();
+        Project p = objectMapper.readValue(resp, Project.class);
+        assertEquals(p.getName(), p1.getName());
+        assertEquals(p.getEditorId().length(), p1.getEditorId().length());
+        assertEquals(p.getViewerId().length(), p1.getViewerId().length());
+        assertEquals(p.getId(), -1);
+        assertEquals(p.getNotes().size(), 0);
+    }
+
+    @Test
+    void viewOtherProject() throws Exception {
+        when(projectRepository.findByViewerId(p1.getViewerId())).thenReturn(Optional.of(p1));
+
+        String resp = mockMvc.perform(
+                        MockMvcRequestBuilders
+                                .get("/api/project/visit/" + p1.getViewerId()))
+                .andExpect(status().isOk())
+                .andReturn().getResponse().getContentAsString();
+        Project p = objectMapper.readValue(resp, Project.class);
+        assertEquals(p.getName(), p1.getName());
+        assertNull(p.getEditorId());
+        assertEquals(p.getViewerId().length(), p1.getViewerId().length());
+        assertEquals(p.getId(), -1);
+        assertEquals(p.getNotes().size(), 0);
+    }
+
+    @Test
+    void viewOtherProjectWithEditPermissions() throws Exception {
+        when(projectRepository.findByEditorId(p1.getEditorId())).thenReturn(Optional.of(p1));
+
+        String resp = mockMvc.perform(
+                        MockMvcRequestBuilders
+                                .get("/api/project/visit/" + p1.getEditorId()))
+                .andExpect(status().isOk())
+                .andReturn().getResponse().getContentAsString();
+        Project p = objectMapper.readValue(resp, Project.class);
+        assertEquals(p.getName(), p1.getName());
+        assertEquals(p.getEditorId().length(), p1.getEditorId().length());
+        assertEquals(p.getViewerId().length(), p1.getViewerId().length());
+        assertEquals(p.getId(), -1);
+        assertEquals(p.getNotes().size(), 0);
+    }
+
+    @Test
+    void viewOtherProjectNonExistent() throws Exception {
+        when(projectRepository.findByViewerId(p1.getViewerId())).thenReturn(Optional.of(p1));
+
+        mockMvc.perform(
+                        MockMvcRequestBuilders
+                                .get("/api/project/visit/" + p2.getEditorId()))
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    void addTextNoteLarge() throws Exception {
+        when(projectRepository.findByEditorId(p1.getEditorId())).thenReturn(Optional.of(p1));
+        mockMvc.perform(
+                MockMvcRequestBuilders.post("/api/note/text?editorId=" + p1.getEditorId())
+                        .contentType(MediaType.TEXT_PLAIN)
+                        .content(LARGE)
+        ).andExpect(status().isOk());
+    }
+
+    @Test
+    void addTextNoteOversized() throws Exception {
+        when(projectRepository.findByEditorId(p1.getEditorId())).thenReturn(Optional.of(p1));
+        mockMvc.perform(
+                MockMvcRequestBuilders.post("/api/note/text?editorId=" + p1.getEditorId())
+                        .contentType(MediaType.TEXT_PLAIN)
+                        .content(OVERSIZED)
+        ).andExpect(status().isBadRequest());
+    }
+
+    @Test
+    void addTextNoteNoPermission() throws Exception {
+        mockMvc.perform(
+                MockMvcRequestBuilders.post("/api/note/text?editorId=" + p1.getEditorId())
+                        .contentType(MediaType.TEXT_PLAIN)
+                        .content(SMALL)
+        ).andExpect(status().isBadRequest());
+    }
+
+    @Test
+    void addTextNoteViewer() throws Exception {
+        when(projectRepository.findByViewerId(p1.getViewerId())).thenReturn(Optional.of(p1));
+        mockMvc.perform(
+                MockMvcRequestBuilders.post("/api/note/text?editorId=" + p1.getViewerId())
+                        .contentType(MediaType.TEXT_PLAIN)
+                        .content(SMALL)
+        ).andExpect(status().isOk());
+    }
+
+    @Test
+    void addTextNoteEditor() throws Exception {
+        when(projectRepository.findByEditorId(p1.getEditorId())).thenReturn(Optional.of(p1));
+        mockMvc.perform(
+                MockMvcRequestBuilders.post("/api/note/text?editorId=" + p1.getEditorId())
+                        .contentType(MediaType.TEXT_PLAIN)
+                        .content(SMALL)
+        ).andExpect(status().isOk());
+    }
+
+    @Test
+    void addFileNoteLarge() throws Exception {
+        when(projectRepository.findByEditorId(p1.getEditorId())).thenReturn(Optional.of(p1));
+        mockMvc.perform(
+                MockMvcRequestBuilders
+                        .multipart("/api/note/file?editorId=" + p1.getEditorId())
+                        .file(FLARGE)
+        ).andExpect(status().isOk());
+    }
+
+    @Test
+    void addFileNoteOversized() throws Exception {
+        when(projectRepository.findByEditorId(p1.getEditorId())).thenReturn(Optional.of(p1));
+        mockMvc.perform(
+                MockMvcRequestBuilders
+                        .multipart("/api/note/file?editorId=" + p1.getEditorId())
+                        .file(FOVERSIZED)
+        ).andExpect(status().isBadRequest());
+    }
+
+    @Test
+    void addFileNoteExtraLarge() throws Exception {
+        when(projectRepository.findByEditorId(p1.getEditorId())).thenReturn(Optional.of(p1));
+        mockMvc.perform(
+                MockMvcRequestBuilders
+                        .multipart("/api/note/file?editorId=" + p1.getEditorId())
+                        .file(FEXTRALARGE)
+        ).andExpect(status().isBadRequest());
+    }
+
+    @Test
+    void addFileNoteNoPermission() throws Exception {
+        mockMvc.perform(
+                MockMvcRequestBuilders
+                        .multipart("/api/note/file?editorId=" + p1.getEditorId())
+                        .file(FSMALL)
+        ).andExpect(status().isBadRequest());
+    }
+
+    @Test
+    void addFileNoteViewer() throws Exception {
+        when(projectRepository.findByViewerId(p1.getViewerId())).thenReturn(Optional.of(p1));
+        mockMvc.perform(
+                MockMvcRequestBuilders
+                        .multipart("/api/note/file?editorId=" + p1.getViewerId())
+                        .file(FSMALL)
+        ).andExpect(status().isBadRequest());
+    }
+
+    @Test
+    void addFileNoteEditor() throws Exception {
+        when(projectRepository.findByEditorId(p1.getEditorId())).thenReturn(Optional.of(p1));
+        mockMvc.perform(
+                MockMvcRequestBuilders
+                        .multipart("/api/note/file?editorId=" + p1.getEditorId())
+                        .file(FSMALL)
+        ).andExpect(status().isOk());
+    }
+
+    @Test
+    void removeNoteNoPermission() throws Exception {
+        mockMvc.perform(
+                MockMvcRequestBuilders
+                        .delete("/api/note/" + n1.getId() + "?editorId=" + p1.getEditorId())
+                        .contentType(MediaType.TEXT_PLAIN)
+                        .content(SMALL)
+        ).andExpect(status().isOk());
+    }
+
+    @Test
+    void removeNoteViewer() throws Exception {
 
     }
 
     @Test
-    void removeProjectValid() {
+    void removeNoteNonExistent() throws Exception {
 
     }
 
     @Test
-    void viewOwnProject() {
-    }
+    void removeNoteValid() throws Exception {
 
-    @Test
-    void viewOwnProjectUnauthorized() {
-    }
-
-    @Test
-    void viewOwnProjectNonExistent() {
-    }
-
-    @Test
-    void viewOtherProject() {
-    }
-
-    @Test
-    void addTextNoteSmall() {
-    }
-
-    @Test
-    void addTextNoteLarge() {
-    }
-
-    @Test
-    void addTextNoteOversized() {
-    }
-
-    @Test
-    void addTextNoteOverLarge() {
-    }
-
-    @Test
-    void addTextNoteNoPermission() {
-    }
-
-    @Test
-    void addTextNoteEditor() {
-    }
-
-    @Test
-    void addTextNoteOwner() {
-    }
-
-    @Test
-    void addFileNoteSmall() {
-    }
-
-    @Test
-    void addFileNoteLarge() {
-    }
-
-    @Test
-    void addFileNoteOversized() {
-    }
-
-    @Test
-    void addFileNoteOverLarge() {
-    }
-
-    @Test
-    void addFileNoteNoPermission() {
-    }
-
-    @Test
-    void addFileNoteEditor() {
-    }
-
-    @Test
-    void addFileNoteOwner() {
-    }
-
-    @Test
-    void removeNote() {
     }
 
     @Test

@@ -3,11 +3,9 @@ package VisiCode.Controllers;
 import VisiCode.Domain.*;
 import VisiCode.Domain.Exceptions.EntityException;
 import VisiCode.Domain.Exceptions.UserException;
-import VisiCode.Payload.NoteResponse;
 import VisiCode.Payload.ProjectCreationRequest;
-import VisiCode.Payload.ProjectRemovalRequest;
+import com.google.cloud.datastore.DatastoreException;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpStatus;
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
@@ -17,6 +15,7 @@ import javax.validation.Valid;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.StreamSupport;
 
@@ -29,6 +28,8 @@ public class ProjectController extends UserAuthenticable {
     ProjectRepository projectRepository;
     @Autowired
     UserRepository userRepository;
+
+    public static int MAX_PROJECT_COUNT = 1024;
 
     @ResponseBody
     @GetMapping("/project")
@@ -45,6 +46,9 @@ public class ProjectController extends UserAuthenticable {
     @PostMapping("/project/create")
     public Project createProject(Authentication auth, @RequestBody @Valid ProjectCreationRequest request) {
         User user = getAuthenticated(auth);
+
+        if (user.getProjects().size() == MAX_PROJECT_COUNT) throw new ProjectCountException();
+
         Iterable<Project> existingProjects = projectRepository.findAllById(user.getProjects());
         for (Project p : existingProjects) {
             if (p.getName().equals(request.getName()))
@@ -61,32 +65,34 @@ public class ProjectController extends UserAuthenticable {
             throw EntityException.duplicateProject(request.getName());
     }
 
-    @PostMapping("/project/remove")
-    @ResponseStatus(value = HttpStatus.OK)
-    public void removeProject(Authentication auth, @RequestBody @Valid ProjectRemovalRequest request) {
-        User user = getAuthenticated(auth);
-
-        Long id = request.getId();
-        if (user.removeProject(id)) {
-            userRepository.save(user);
-            Project project = projectRepository.findById(id).orElseThrow(() -> EntityException.noSuchProject(id));
-            projectRepository.deleteById(id);
-            for(Long i : project.getNotes()) {
-                noteRepository.deleteById(i);
-            }
-        } else
-            throw UserException.notOwner(user.getUsername());
-    }
+//    @PostMapping("/project/remove")
+//    @ResponseStatus(value = HttpStatus.OK)
+//    public void removeProject(Authentication auth, @RequestBody @Valid ProjectRemovalRequest request) {
+//        User user = getAuthenticated(auth);
+//
+//        Long id = request.getId();
+//        if (user.removeProject(id)) {
+//            userRepository.save(user);
+//            Project project = projectRepository.findById(id).orElseThrow(() -> EntityException.noSuchProject(id));
+//            projectRepository.deleteById(id);
+//            for(Long i : project.getNotes()) {
+//                noteRepository.deleteById(i);
+//            }
+//        } else
+//            throw UserException.notOwner(user.getUsername());
+//    }
 
     @ResponseBody
     @GetMapping("/project/{name}")
     public Project viewOwnProject(Authentication auth, @PathVariable String name) {
         User user = getAuthenticated(auth);
-        Project project = StreamSupport.stream(projectRepository
+        Optional<Project> findProject = StreamSupport.stream(projectRepository
                 .findAllById(user.getProjects()).spliterator(), false)
                 .filter((p)->p.getName().equals(name))
-                .findFirst()
-                .orElseThrow(() -> EntityException.noSuchProject(name));
+                .findFirst();
+        if (findProject.isEmpty()) throw EntityException.noSuchProject(name);
+
+        Project project = findProject.get();
         if (user.getProjects().contains(project.getId())) {
             project.clearId();
             return project;
@@ -104,32 +110,31 @@ public class ProjectController extends UserAuthenticable {
 
     @ResponseBody
     @PostMapping("/note/file")
-    public NoteResponse addFileNote(@RequestParam String editorId, @RequestParam("file") MultipartFile file) throws IOException {
+    public void addFileNote(@RequestParam String editorId, @RequestParam("file") MultipartFile file) throws IOException {
         Project editableProject = getEditable(editorId);
 
         Note note = Note.makeFileNote(file);
-        return addNote(editableProject, note);
+        addNote(editableProject, note);
     }
 
     @ResponseBody
     @PostMapping("/note/text")
-    public NoteResponse addTextNote(@RequestParam String editorId, @RequestBody String text) {
+    public void addTextNote(@RequestParam String editorId, @RequestBody String text) {
         Project editableProject = getEditable(editorId);
 
         // https://www.codejava.net/frameworks/spring-boot/spring-boot-file-upload-tutorial
         Note note = Note.makeTextNote(text);
-        return addNote(editableProject, note);
+        addNote(editableProject, note);
     }
 
     @ResponseBody
     @DeleteMapping("/note/{noteId}")
-    public NoteResponse removeNote(@PathVariable Long noteId, @RequestParam String editorId) {
+    public void removeNote(@PathVariable Long noteId, @RequestParam String editorId) {
         Project editableProject = getEditable(editorId);
         Note note = noteRepository.findById(noteId).orElseThrow(()->EntityException.noSuchNote(noteId));
         if (editableProject.removeNote(note)) {
             projectRepository.save(editableProject);
             noteRepository.deleteById(note.getId());
-            return new NoteResponse(note);
         }
         throw EntityException.noSuchNote(noteId);
     }
@@ -163,12 +168,21 @@ public class ProjectController extends UserAuthenticable {
         return project;
     }
 
-    private NoteResponse addNote(Project project, Note note) {
-        noteRepository.save(note);
+    private void addNote(Project project, Note note) {
+        try {
+            noteRepository.save(note);
+        } catch (DatastoreException e) {
+            throw new Note.BlobSizeException(note.getData().length());
+        }
         if (project.addNote(note)) {
             projectRepository.save(project);
-            return new NoteResponse(note);
         } else
             throw EntityException.duplicateNote(note.getId());
+    }
+
+    public static class ProjectCountException extends EntityException {
+        public ProjectCountException() {
+            super(String.format("Project size cannot exceed %d notes", MAX_PROJECT_COUNT));
+        }
     }
 }
