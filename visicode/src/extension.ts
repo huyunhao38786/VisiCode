@@ -4,7 +4,11 @@ import * as vscode from 'vscode'
 const path = require('node:path')
 const hljs = require('highlight.js') // https://highlightjs.org/
 const http = require('http')
-const md = require('markdown-it')()
+const tm = require('markdown-it-texmath');
+const md = require('markdown-it')({html:true})
+                  .use(tm, { engine: require('katex'),
+                             delimiters: 'dollars',
+                             katexOptions: { macros: {"\\RR": "\\mathbb{R}"} } });
 
 
 // This method is called when your extension is activated
@@ -37,6 +41,7 @@ async function getHTMLContent(context: vscode.ExtensionContext, editor: vscode.T
 
 	let code: string = editor.document.getText()
 	let html = `<link rel="stylesheet" href="${cssUri}">\n<script src="${scriptUri}"></script>\n\n`
+	html += '<link  rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex/dist/katex.min.css">\n<link rel="stylesheet" href="../css/texmath.css">\n\n'
 	
 	let startCodePos = 0
 	let startTagPos = 0

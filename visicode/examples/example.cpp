@@ -29,6 +29,9 @@ void XNNSerializer::serializeAddNode(
   _nodes.push_back(flatbufferNode);
 }
 
+//!<visicode>
+// http://localhost:8080/api/note/5739956077068288?viewerOrEditorId=dcfa3c50-6541-46b4-a41b-f31f3e5e355c
+//!</visicode>
 
 void XNNSerializer::serializeTensorValue(
     uint32_t xnn_datatype,
