@@ -39,6 +39,14 @@ async function getHTMLContent(context: vscode.ExtensionContext, editor: vscode.T
 	const cssUri = panel.webview.asWebviewUri(cssPath)
 	const scriptUri = panel.webview.asWebviewUri(scriptPath)
 
+	const config = vscode.workspace.getConfiguration("visicode-alpha")
+	const viewerID = config.get("viewerOrEditorId")
+
+	if (viewerID == "") {
+		vscode.window.showErrorMessage('Please provide viewer or editor id in settings')
+		return ""
+	}
+
 	let code: string = editor.document.getText()
 	let html = `<link rel="stylesheet" href="${cssUri}">\n<script src="${scriptUri}"></script>\n\n`
 	html += '<link  rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex/dist/katex.min.css">\n<link rel="stylesheet" href="../css/texmath.css">\n\n'
@@ -65,7 +73,7 @@ async function getHTMLContent(context: vscode.ExtensionContext, editor: vscode.T
 
 		let tag: string = code.substring(startTagPos + "//!<visicode>".length, endTagPos)
 		let url = tag.substring(tag.indexOf("//") + 2).trim()
-		let content: string = await getHTMLContentFromURL(url)
+		let content: string = await getHTMLContentFromURL(url + `?viewerOrEditorId=${viewerID}`)
 		html = 	html + content
 
 		startCodePos = endTagPos + "//!</visicode>".length

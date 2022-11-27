@@ -1,6 +1,6 @@
 // This url should cause an error
 //!<visicode>
-// http://localhost/api/note/5704134103662592?viewerOrEditorId=dcfa3c50-6541-46b4-a41b-f31f3e5e355c
+// http://localhost/api/note/5704134103662592
 //!</visicode>
 
 // (c) Meta Platforms, Inc. and affiliates. Confidential and proprietary.
@@ -30,7 +30,7 @@ void XNNSerializer::serializeAddNode(
 }
 
 //!<visicode>
-// http://localhost:8080/api/note/5739956077068288?viewerOrEditorId=dcfa3c50-6541-46b4-a41b-f31f3e5e355c
+// http://localhost:8080/api/note/5739956077068288
 //!</visicode>
 
 void XNNSerializer::serializeTensorValue(
@@ -61,7 +61,7 @@ void XNNSerializer::serializeTensorValue(
 
 // Markdown
 //!<visicode>
-// http://localhost:8080/api/note/5637476211228672?viewerOrEditorId=dcfa3c50-6541-46b4-a41b-f31f3e5e355c
+// http://localhost:8080/api/note/5637476211228672
 //!</visicode>
 
   const auto tensorValue = CreateXNNTensorValueDirect(
@@ -110,5 +110,5 @@ std::string XNNSerializer::finishAndSerialize(
 
 // Image
 //!<visicode>
-// http://localhost:8080/api/note/5704134103662592?viewerOrEditorId=dcfa3c50-6541-46b4-a41b-f31f3e5e355c
+// http://localhost:8080/api/note/5704134103662592
 //!</visicode>

@@ -19,7 +19,17 @@
         "command": "visicode-alpha.render",
         "title": "VisiCode: Render Source Code"
       }
-    ]
+    ],
+    "configuration": {
+      "title": "VisiCode",
+      "properties": {
+        "visicode-alpha.viewerOrEditorId": {
+          "type": "string",
+          "default": "",
+          "description": "Your viewer or editor id for your note"
+        }
+      }
+    }
   },
   "scripts": {
     "vscode:prepublish": "npm run compile",
