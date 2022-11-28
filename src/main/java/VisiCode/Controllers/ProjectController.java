@@ -20,6 +20,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.StreamSupport;
+import java.util.*;
 
 @Controller
 @RequestMapping("/api")
@@ -77,7 +78,7 @@ public class ProjectController extends UserAuthenticable {
             userRepository.save(user);
             Project project = projectRepository.findById(id).orElseThrow(() -> EntityException.noSuchProject(id));
             projectRepository.deleteById(id);
-            for (Long i : project.getNotes()) {
+            for (String i : project.getNotes()) {
                 noteRepository.deleteById(i);
             }
         } else
@@ -121,17 +122,17 @@ public class ProjectController extends UserAuthenticable {
 
     @ResponseBody
     @PostMapping("/note/text")
-    public void addTextNote(@RequestParam String editorId, @RequestBody String text) {
+    public String addTextNote(@RequestParam String editorId, @RequestBody String text) {
         Project editableProject = getEditable(editorId);
-
         // https://www.codejava.net/frameworks/spring-boot/spring-boot-file-upload-tutorial
         Note note = Note.makeTextNote(text);
         addNote(editableProject, note);
+        return text;
     }
 
     @ResponseBody
     @DeleteMapping("/note/{noteId}")
-    public void removeNote(@PathVariable Long noteId, @RequestParam String editorId) {
+    public void removeNote(@PathVariable String noteId, @RequestParam String editorId) {
         Project editableProject = getEditable(editorId);
         Note note = noteRepository.findById(noteId).orElseThrow(() -> EntityException.noSuchNote(noteId));
         if (editableProject.removeNote(note)) {
@@ -144,7 +145,7 @@ public class ProjectController extends UserAuthenticable {
 
     @ResponseBody
     @GetMapping("/note/{noteId}")
-    public Note viewNote(@PathVariable Long noteId, @RequestParam String viewerOrEditorId) {
+    public Note viewNote(@PathVariable String noteId, @RequestParam String viewerOrEditorId) {
         Project viewableProject = getViewable(viewerOrEditorId);
         if (viewableProject.getNotes().contains(noteId)) {
             return noteRepository.findById(noteId).orElseThrow(() -> EntityException.noSuchNote(noteId));

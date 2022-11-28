@@ -20,6 +20,7 @@ class Landing extends Component {
     }
     this.addProject = this.addProject.bind(this);
     this.externalProject = this.externalProject.bind(this);
+    // this.removeProject = this.removeProject.bind(this);
   }
 
   componentDidMount() {
@@ -45,6 +46,14 @@ class Landing extends Component {
         });
     }
   }
+
+  // removeProject() {
+  //   axios.delete(projApi("/remove"), {data: { id: id}}).then(response => {if (response.data.error == null) {
+  //     setProject(response.data)
+  //   } else {
+  //     props.router.navigate("/projects")
+  //   }})
+  // }
 
   externalProject() {
     const link = prompt('Edit Link');
