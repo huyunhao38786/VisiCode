@@ -3,7 +3,7 @@
 import * as vscode from 'vscode'
 const path = require('node:path')
 const hljs = require('highlight.js') // https://highlightjs.org/
-const http = require('http')
+const https = require('https')
 const tm = require('markdown-it-texmath');
 const md = require('markdown-it')({html:true})
                   .use(tm, { engine: require('katex'),
@@ -33,7 +33,7 @@ export function activate(context: vscode.ExtensionContext) {
 	)
 }
 
-async function getHTMLContent(context: vscode.ExtensionContext, editor: vscode.TextEditor, panel: vscode.WebviewPanel): string {
+async function getHTMLContent(context: vscode.ExtensionContext, editor: vscode.TextEditor, panel: vscode.WebviewPanel): Promise<string> {
 	const cssPath = vscode.Uri.joinPath(context.extensionUri, 'highlight', 'styles', 'atom-one-dark.min.css')
 	const scriptPath = vscode.Uri.joinPath(context.extensionUri, 'highlight', 'highlight.min.js')
 	const cssUri = panel.webview.asWebviewUri(cssPath)
@@ -94,7 +94,7 @@ async function getHTMLContent(context: vscode.ExtensionContext, editor: vscode.T
 
 async function getHTMLContentFromURL(url: string): Promise<string> {
 	let promise = new Promise((resolve, reject) => {
-		http.get(url, (resp) => {
+		https.get(url, (resp) => {
 			let data = ''
 			
 			// A chunk of data has been received.

@@ -30,7 +30,7 @@ void XNNSerializer::serializeAddNode(
 }
 
 //!<visicode>
-// http://localhost:8080/api/note/5739956077068288
+// https://visi-code.ue.r.appspot.com/api/note/5739956077068288
 //!</visicode>
 
 void XNNSerializer::serializeTensorValue(
@@ -61,7 +61,7 @@ void XNNSerializer::serializeTensorValue(
 
 // Markdown
 //!<visicode>
-// http://localhost:8080/api/note/5637476211228672
+// https://visi-code.ue.r.appspot.com/api/note/5637476211228672
 //!</visicode>
 
   const auto tensorValue = CreateXNNTensorValueDirect(
@@ -110,5 +110,5 @@ std::string XNNSerializer::finishAndSerialize(
 
 // Image
 //!<visicode>
-// http://localhost:8080/api/note/5704134103662592
+// https://visi-code.ue.r.appspot.com/api/note/5704134103662592
 //!</visicode>
