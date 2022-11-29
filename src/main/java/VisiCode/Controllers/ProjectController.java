@@ -8,6 +8,7 @@ import VisiCode.Payload.ProjectRemovalRequest;
 import com.google.cloud.datastore.DatastoreException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
@@ -20,7 +21,6 @@ import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.StreamSupport;
-import java.util.*;
 
 @Controller
 @RequestMapping("/api")
@@ -112,12 +112,14 @@ public class ProjectController extends UserAuthenticable {
     }
 
     @ResponseBody
-    @PostMapping("/note/file")
-    public void addFileNote(@RequestParam String editorId, @RequestParam("file") MultipartFile file) throws IOException {
+    @PostMapping(value = "/note/file", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public void addFileNote(@RequestParam String editorId, @RequestBody MultipartFile file) throws IOException {
         Project editableProject = getEditable(editorId);
-
+        System.out.println(file);
+        System.out.println(editableProject.getNotes().size());
         Note note = Note.makeFileNote(file);
         addNote(editableProject, note);
+        System.out.println(editableProject.getNotes().size());
     }
 
     @ResponseBody

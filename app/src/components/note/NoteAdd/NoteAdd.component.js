@@ -1,5 +1,5 @@
 // components/NoteAdd/NoteAdd.js
-import React, { useState } from "react";
+import React, {useEffect, useState} from "react";
 import "./NoteAdd.css";
 import axios from "axios";
 
@@ -7,13 +7,16 @@ function noteApi(str) {
     return `/api/note${str}`
 }
 const NoteAdd = (editorId) => {
-    const [file, setFile] = useState();
+    const [file, setFile] = useState(null);
     const [description, setDescription] = useState("");
-    let formData = new FormData();
 
+
+    // useEffect(() => {
+    //     formData.append("file", file);
+    //     console.log(formData);
+    // })
     const handleFileChange = (event) => {
-        setFile(URL.createObjectURL(event.target.files[0]));
-        formData.append("file", file);
+        setFile(event.target.files[0]);
     };
 
     const handleDescriptionChange = (event) => {
@@ -40,10 +43,14 @@ const NoteAdd = (editorId) => {
         }
     };
 
-    const addImgNote = () => {
+    const addImgNote = async(event) => {
+        event.preventDefault();
+        const formData = new FormData();
+        formData.append("file", file);
+        console.log(...formData);
         if (file !== "") {
             axios
-                .post(noteApi('/file'), formData, { headers: { "Content-Type": "multipart/form-data"}, params: {editorId: editorId.editorId}})
+                .post(noteApi('/file'),  formData, { params: {editorId: editorId.editorId}})
                 .then(response => {
                     if (response.data.error != null) {
                         console.log(response.data.error);
@@ -67,11 +74,11 @@ const NoteAdd = (editorId) => {
                         className="noteadd-header"
                         name="noteadd-header"
                         placeholder="Click to add image"
-                        onChange={(val) => handleFileChange(val)}
+                        onChange={handleFileChange}
                     />
                     <img src={file} />
                     <div className="noteadd-button">
-                        <button onClick={() => addImgNote()}>Add an Img Note</button>
+                        <button onClick={addImgNote}>Add an Img Note</button>
                     </div>
                 </div>
                 <div className="form-group">

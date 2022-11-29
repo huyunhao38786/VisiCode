@@ -26,7 +26,7 @@ function Project(props) {
         console.log(id);
         console.log(project?.editorId);
         axios
-            .delete(noteApi(`/${id}`), { headers: { "Content-Type": "application/json; charset=UTF-8" }, params: {editorId: project?.editorId}})
+            .delete(noteApi(`/${id}`),  {params: {editorId: project?.editorId}})
             .then(response => {
                 if (response.data.error == null) {
                     // setProject(response.data)
@@ -39,7 +39,7 @@ function Project(props) {
     const viewNote = (id) => {
         let text = "";
         axios
-            .get(noteApi(`/${id}`), { headers: { "Content-Type": "application/json; charset=UTF-8" }, params: {editorId: project?.editorId}})
+            .get(noteApi(`/${id}`), {params: {viewerOrEditorId: project?.editorId}})
             .then(response => {
                 if (response.data.error == null) {
                     text = response.data;
