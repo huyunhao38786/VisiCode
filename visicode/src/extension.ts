@@ -3,7 +3,6 @@
 import * as vscode from 'vscode'
 const path = require('node:path')
 const hljs = require('highlight.js') // https://highlightjs.org/
-const https = require('https')
 const tm = require('markdown-it-texmath');
 const md = require('markdown-it')({html:true})
                   .use(tm, { engine: require('katex'),
@@ -93,8 +92,15 @@ async function getHTMLContent(context: vscode.ExtensionContext, editor: vscode.T
 }
 
 async function getHTMLContentFromURL(url: string): Promise<string> {
+	let protocol
+	if (url.indexOf("https://") > -1)
+		protocol = "https"
+	else
+		protocol = "http"
+	const http = require(protocol)
+
 	let promise = new Promise((resolve, reject) => {
-		https.get(url, (resp) => {
+		http.get(url, (resp) => {
 			let data = ''
 			
 			// A chunk of data has been received.
