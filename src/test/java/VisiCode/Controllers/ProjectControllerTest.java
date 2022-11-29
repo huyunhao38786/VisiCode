@@ -78,7 +78,7 @@ class ProjectControllerTest {
         p2 = Project.forTest("Project2", 2L);
         p3 = Project.forTest("Project3", 3L);
 
-        n1 = Note.forTest(1L);
+        n1 = Note.forTest(1L + "");
 
         pn1 = Project.forTest("ProjectWithNote1");
         pn1.addNote(n1);
@@ -86,7 +86,7 @@ class ProjectControllerTest {
         pnMax = Project.forTest("ProjectFull");
 
         for (int i = 0; i < Project.MAX_NOTES; i++) {
-            pnMax.addNote(Note.forTest((long) i + 1000));
+            pnMax.addNote(Note.forTest( i + 1000 + ""));
         }
     }
 
